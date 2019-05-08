@@ -102,7 +102,8 @@ class CachedDataProvider:
         try:
             del self[key]
         except KeyError:
-            return self[key]
+            pass
+        return self[key]
 
     def close(self):
         self.local.commit()
