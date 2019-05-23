@@ -1,6 +1,6 @@
 import numpy as np
-from pickle_store import PickleStore
 from sklearn.feature_extraction.text import TfidfVectorizer
+from .pickle_store import PickleStore
 
 class CorpusFeaturesManager:
 
@@ -8,31 +8,35 @@ class CorpusFeaturesManager:
         self.model_path = path
         self.model = None
 
-    def update(self, corpus):
+    def update(self, corpus, *args, **kwargs):
         corpus_texts = corpus['values'].values
-        self.model = self.fit_model(corpus_texts)
-        self.save_model(self.model)
-
-    def load(self):
-        self.model = self.load_model()
+        self.fit_model(corpus_texts, *args, **kwargs)
+        self.save_model()
+        
+    def calculate_scores(self, text_features, corpus_features):
+        return np.dot(text_features, corpus_features.T)
 
     def compare(self, text, corpus):
         if self.model is None:
-            self.load()
-
+            self.load_model()
+            
         corpus_keys = corpus.index
-        corpus_texts = corpus['values'].values
+        
+        if len(corpus) > 0:
+            corpus_texts = corpus['values'].values
 
-        text_features = self.get_text_features(text)
-        corpus_features = self.get_texts_features(corpus_texts)
+            text_features = self.get_text_features(text)
+            corpus_features = self.get_texts_features(corpus_texts)
 
-        scores = np.dot(text_features, corpus_features.T)
+            scores = self.calculate_scores(text_features, corpus_features)
 
-        ret = list(zip(corpus_keys, scores))
-        ret.sort(key=lambda x: -x[1])
-        return ret
+            ret = list(zip(corpus_keys, scores))
+            ret.sort(key=lambda x: -x[1])
+            return ret
+        else:
+            return []
 
-    def save_model(self, model):
+    def save_model(self):
         raise NotImplementedError
 
     def load_model(self):
@@ -55,15 +59,14 @@ class TFIDFCorpusFeaturesManager(CorpusFeaturesManager):
         self.store = PickleStore(path)
 
     def load_model(self):
-        return self.store.get()
+        self.model = self.store.get()
 
     def fit_model(self, corpus_texts):
-        model = TfidfVectorizer(max_features=10000)
-        model.fit(corpus_texts)
-        return model
+        self.model = TfidfVectorizer(max_features=10000)
+        self.model.fit(corpus_texts)
 
-    def save_model(self, model):
-        self.store.set(model)
+    def save_model(self):
+        self.store.set(self.model)
 
     def get_text_features(self, text):
         features = self.model.transform([text])
