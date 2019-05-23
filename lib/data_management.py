@@ -16,6 +16,7 @@ class CachedDataEmitter(DataEmitter):
         self.path = path
         self.remote = remote
         self.ram_cache = None
+        os.makedirs(os.path.dirname(path), exist_ok=True)
 
     def emit(self):
         if self.ram_cache is not None:
