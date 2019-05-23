@@ -22,14 +22,14 @@ class SimilaritiesFinder:
             [r[0] for r in most_similar[:self.max_similarities] if r[1] >= self.similarity_threshold]
         return top_keys
 
-    def find_similarities_between_lists(self, source_corpus, target_corpus):
+    def find_similarities_between_lists(self, source_corpus, target_corpus, force_symmetric_filtering = False):
         ret = []
         for key in source_corpus.index:
             text = source_corpus.loc[key]['values']
             similar_keys = self.find_similarities(text, target_corpus)
             for target_key in similar_keys:
                 ret.append((key, target_key))
-        if list(source_corpus.index) == list(target_corpus.index):
+        if force_symmetric_filtering or list(source_corpus.index) == list(target_corpus.index):
             ret = SimilaritiesFinder.refine_symmetric_similarities_list(ret)
         else:
             ret = SimilaritiesFinder.refine_similarities_list(ret)
