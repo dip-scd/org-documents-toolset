@@ -1,6 +1,6 @@
 from atlassian import Confluence, Jira
-from data_management import DataEmitter, KeyedDataEmitter, CachedDataProvider
-from text_processing import text_simplifier
+from .data_management import DataEmitter, KeyedDataEmitter, CachedDataProvider
+from .text_processing import text_simplifier
 
 class JiraSimplifiedTextProvider:
     def __init__(self, jira):
@@ -148,6 +148,20 @@ class JiraManager:
         data = construct_remote_link_data()
 
         self.remote.post('/rest/api/latest/issue/' + source_id + '/remotelink', data)
+        
+    def issue_history(self, id_):
+        def issue(self, key, fields='*all', expand=''):
+                return self.get('rest/api/2/issue/{0}?fields={1}&expand={2}'\
+                                .format(key, fields, expand))
+
+        def extract_fields(h):
+            a = h['author']['name']
+            c = h['created']
+            return (c, a, [e['field'] for e in h['items']])
+
+        raw = issue(self.remote, id_, expand='changelog')
+
+        return [extract_fields(h) for h in raw['changelog']['histories']]
 
     def __getitem__(self, key):
         return self.remote.issue(key)
@@ -192,7 +206,7 @@ class ConfluenceManager:
             else:
                 return 'id_' + key
 
-        self.cached = CachedDataProvider(self.remote,
+        self.cached = CachedDataProvider(self,
                                          path,
                                          converter_to_local_key=converter_to_local_key)
         self.simplified = CachedDataProvider(
