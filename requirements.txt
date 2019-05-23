@@ -1,0 +1,8 @@
+atlassian-python-api>=1.12.6
+html5lib>=1.0.1
+beautifulsoup4>=4.7.1
+nltk>=3.4.1
+numpy>=1.16.3
+pandas>=0.24.1
+sqlitedict>=1.6.0
+sklearn>=0.0
